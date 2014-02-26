@@ -186,6 +186,14 @@ static const uint8_t AppSelection1[20] = {0x00, 0xA4, 0x04, 0x00, 0x0E, 0x31, 0x
 static const uint8_t AppSelection2[20] = {0x00, 0xA4, 0x04, 0x00, 0x0E, 0x32, 0x50, 0x41, 0x59,
 		0x2E, 0x53, 0x59, 0x53, 0x2E, 0x44, 0x44, 0x46, 0x30, 0x31, 0x00};
 
+void print_mem(void const *vp, size_t n)
+{
+    unsigned char const *p = vp;
+    for (size_t i=0; i<n; i++)
+        printf("%02x\n", p[i]);
+    putchar('\n');
+};
+
 int main(int argc, char **argv)
 {
     phbalReg_R_Pi_spi_DataParams_t spi_balReader;
@@ -350,6 +358,9 @@ uint32_t DetectMifare(void *halReader)
 		 * of the ISO 14443A standard. */
 		status = phpalI14443p3a_ActivateCard(&I14443p3a,
 				NULL, 0x00, bUid, &bLength, bSak, &bMoreCardsAvailable);
+
+        print_mem(&I14443p3a, sizeof(phpalI14443p3a_Sw_DataParams_t));
+
 		uint8_t pUidOut[10];
 
 		sak_atqa = bSak[0] << 24 | pAtqa[0] << 8 | pAtqa[1];
