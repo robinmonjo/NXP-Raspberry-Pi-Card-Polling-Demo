@@ -189,9 +189,11 @@ static const uint8_t AppSelection2[20] = {0x00, 0xA4, 0x04, 0x00, 0x0E, 0x32, 0x
 void print_mem(void const *vp, size_t n)
 {
     unsigned char const *p = vp;
-    for (size_t i=0; i<n; i++)
+    size_t i = 0;
+    while (i < n) {
         printf("%02x\n", p[i]);
-    putchar('\n');
+        i++;
+    }
 };
 
 int main(int argc, char **argv)
