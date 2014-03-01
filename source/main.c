@@ -400,6 +400,13 @@ uint32_t DetectMifare(void *halReader)
 				case sak_ul << 24 | atqa_ul:
 					printf("MIFARE Ultralight detected\n");
 					detected_card &= mifare_ultralight;
+                    uint8_t dataBuffer[1024];
+                    phalMful_Read(&alMful, 0, dataBuffer);
+                    for(i = 0; i < 1024; i++){
+                        printf("%02X ", dataBuffer);
+                    }
+                         
+
 				break;
 				case sak_mfp_2k_sl2 << 24 | atqa_mfp_s:
 					printf("MIFARE Plus detected\n");
