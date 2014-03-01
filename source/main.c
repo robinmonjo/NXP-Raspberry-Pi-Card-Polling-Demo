@@ -350,7 +350,6 @@ uint32_t DetectMifare(void *halReader)
 		 * of the ISO 14443A standard. */
 		status = phpalI14443p3a_ActivateCard(&I14443p3a,
 				NULL, 0x00, bUid, &bLength, bSak, &bMoreCardsAvailable);
-		uint8_t pUidOut[10];
 
 		sak_atqa = bSak[0] << 24 | pAtqa[0] << 8 | pAtqa[1];
 		sak_atqa &= 0xFFFF0FFF;
@@ -401,7 +400,7 @@ uint32_t DetectMifare(void *halReader)
 					printf("MIFARE Ultralight detected\n");
 					detected_card &= mifare_ultralight;
                     uint8_t dataBuffer[1024];
-                    phalMful_Read(&alMful, 0, dataBuffer);
+                    PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, 0, dataBuffer));
                     int i;
                     for(i = 0; i < 1024; i++){
                         printf("%s ", dataBuffer);
