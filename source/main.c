@@ -402,6 +402,7 @@ uint32_t DetectMifare(void *halReader)
 					detected_card &= mifare_ultralight;
                     uint8_t dataBuffer[1024];
                     phalMful_Read(&alMful, 0, dataBuffer);
+                    int i;
                     for(i = 0; i < 1024; i++){
                         printf("%02X ", dataBuffer);
                     }
