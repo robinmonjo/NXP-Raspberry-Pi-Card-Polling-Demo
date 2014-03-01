@@ -399,11 +399,12 @@ uint32_t DetectMifare(void *halReader)
 				case sak_ul << 24 | atqa_ul:
 					printf("MIFARE Ultralight detected\n");
 					detected_card &= mifare_ultralight;
-                    uint8_t dataBuffer[1024];
-                    PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, 0, dataBuffer));
+                    uint8_t bBufferReader[96];
+                    memset(bBufferReader, '\0', 96);
+                    PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, 4, bBufferReader));
                     int i;
-                    for(i = 0; i < 1024; i++){
-                        printf("%02X", dataBuffer[i]);
+                    for(i = 0; i < 96; i++){
+                        printf("%02X", bBufferReader[i]);
                     }
                          
 
