@@ -404,7 +404,7 @@ uint32_t DetectMifare(void *halReader)
                     phalMful_Read(&alMful, 0, dataBuffer);
                     int i;
                     for(i = 0; i < 1024; i++){
-                        printf("%02X ", dataBuffer);
+                        printf("%s ", dataBuffer);
                     }
                          
 
