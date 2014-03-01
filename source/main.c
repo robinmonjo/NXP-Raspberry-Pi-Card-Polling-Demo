@@ -346,12 +346,21 @@ uint32_t DetectMifare(void *halReader)
 	while (bMoreCardsAvailable)
 	{
 		cards++;
+        uint8_t bBufferReader[96];
+        memset(bBufferReader, '\0', 96);
+        PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, 4, bBufferReader));
+        int i;
+        for(i = 0; i < 96; i++){
+            printf("%02X", bBufferReader[i]);
+        }
 		/* Activate the communication layer part 3
 		 * of the ISO 14443A standard. */
-		status = phpalI14443p3a_ActivateCard(&I14443p3a,
-				NULL, 0x00, bUid, &bLength, bSak, &bMoreCardsAvailable);
+		//status = phpalI14443p3a_ActivateCard(&I14443p3a,
+		//		NULL, 0x00, bUid, &bLength, bSak, &bMoreCardsAvailable);
 
-		sak_atqa = bSak[0] << 24 | pAtqa[0] << 8 | pAtqa[1];
+		
+
+        /*sak_atqa = bSak[0] << 24 | pAtqa[0] << 8 | pAtqa[1];
 		sak_atqa &= 0xFFFF0FFF;
 
 		if (!status)
@@ -473,9 +482,9 @@ uint32_t DetectMifare(void *halReader)
 		}
 		printf("\n\n");
 		status = phpalI14443p3a_HaltA(&I14443p3a);
-		detected_card = 0xFFFF;
+		detected_card = 0xFFFF;*/
 	}
-	return detected_card;
+	return 0xFFFF;
 }
 
 uint8_t DetectFelica(void *halReader)
