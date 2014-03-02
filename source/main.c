@@ -405,7 +405,6 @@ uint32_t DetectMifare(void *halReader)
                     //data on the card are located at address (pages) 04 to 0F (15)
                     int p;
                     for(p = 4; p <= 15; p++) {
-                        printf("\nPage %d \n", p);
                         memset(bBufferReader, '\0', 4);
                         PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, p, bBufferReader));
                         int i;
