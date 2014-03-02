@@ -379,8 +379,8 @@ uint8_t * read_mifare_ultra_light_user_data(phalMful_Sw_DataParams_t *alMful) {
         for(idx = 0; idx < 4; idx++) {
             printf("%02X ", buffer[idx]);
         }
-        memcpy(cursor, buffer, sizeof(buffer)/sizeof(uint8_t)); //add it to glogab buffer
-        cursor += sizeof(buffer)/sizeof(uint8_t);
+        memcpy(cursor, buffer, 4); //add it to glogab buffer
+        cursor += 4;
         printf("After copy\n");
         for(idx = 0; idx < 11 * 4; idx++) {
             printf("%02X ", global_buffer[idx]);
