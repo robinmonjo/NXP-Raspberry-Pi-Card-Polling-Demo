@@ -373,8 +373,18 @@ uint8_t * read_mifare_ultra_light_user_data(phalMful_Sw_DataParams_t *alMful) {
     for(page = 4; page <= 15; page++) {
         memset(buffer, '\0', 4);
         PH_CHECK_SUCCESS_FCT(status, phalMful_Read(alMful, page, buffer)); //read the page
+
+        printf("\nOn page \n");
+        int idx = 0;
+        for(idx = 0; idx < 4; idx++) {
+            printf("%02X ", buffer[idx]);
+        }
         memcpy(cursor, buffer, sizeof(buffer)/sizeof(uint8_t)); //add it to glogab buffer
         cursor += sizeof(buffer)/sizeof(uint8_t);
+        printf("After copy\n");
+        for(idx = 0; idx < 11 * 4; idx++) {
+            printf("%02X ", global_buffer[idx]);
+        }
     }
     return global_buffer;
 }
