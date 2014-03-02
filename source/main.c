@@ -368,9 +368,9 @@ uint8_t * read_mifare_ultra_light_user_data(phalMful_Sw_DataParams_t *alMful) {
     phStatus_t status;
 
     //data on the card are located at address (pages) 04 to 0F (15)
-    uint8_t buffer[4]; //will read 4 bytes per page
     int page;
     for(page = 4; page <= 15; page++) {
+        uint8_t buffer[4]; //will read 4 bytes per page
         memset(buffer, '\0', 4);
         PH_CHECK_SUCCESS_FCT(status, phalMful_Read(alMful, page, buffer)); //read the page
 
@@ -382,7 +382,7 @@ uint8_t * read_mifare_ultra_light_user_data(phalMful_Sw_DataParams_t *alMful) {
         fflush(stdout);
         memcpy(cursor, buffer, sizeof(buffer)); //add it to glogab buffer
         cursor += sizeof(buffer);
-        printf("After copy\n");
+        printf("\nAfter copy\n");
         for(idx = 0; idx < 11 * 4; idx++) {
             printf("%02X ", global_buffer[idx]);
         }
