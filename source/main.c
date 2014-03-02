@@ -364,7 +364,7 @@ uint32_t DetectMifare(void *halReader)
 				case sak_jcop << 24 | atqa_jcop:
 					printf("JCOP detected\n");
 					detected_card &= jcop;
-					PaymentCard(halReader, bUid);
+					//PaymentCard(halReader, bUid);
 				break;
 				case sak_layer4 << 24 | atqa_nPA:
 					printf("German eID (neuer Personalausweis) detected\n");
