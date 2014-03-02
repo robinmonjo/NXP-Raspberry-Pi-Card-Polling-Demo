@@ -319,9 +319,9 @@ uint32_t DetectMifare(void *halReader)
                     for(p = 4; p <= 15; p++) {
                         memset(bBufferReader, '\0', 4);
                         PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, p, bBufferReader));
-                        int i;
-                        for(i = 0; i < 4; i++){
-                            printf("%02X ", bBufferReader[i]);
+                        int j;
+                        for(j = 0; j < 4; j++){
+                            printf("%02X ", bBufferReader[j]);
                         }
                         printf("\n");
                     }
