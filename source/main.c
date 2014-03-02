@@ -399,14 +399,24 @@ uint32_t DetectMifare(void *halReader)
 				case sak_ul << 24 | atqa_ul:
 					printf("MIFARE Ultralight detected\n");
 					detected_card &= mifare_ultralight;
-                    uint8_t bBufferReader[96];
-                    memset(bBufferReader, '\0', 0x60);
-                    PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, 6, bBufferReader));
-                    int i;
-                    printf("First read:\n");
-                    for(i = 0; i < 96; i++){
-                        printf("%02X", bBufferReader[i]);
+
+                    uint8_t fullData[11 * 16]; //11 pages of 16 bytes
+
+                    uint8_t bBufferReader[16];
+                    
+
+                    //data on the card are located at address (pages) 04 to 0F (15)
+                    int p;
+                    for(p = 4; p <= 15; p++) {
+                        printf("\nPage %d \n", p);
+                        memset(bBufferReader, '\0', 16);
+                        PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, p, bBufferReader));
+                        int i;
+                        for(i = 0; i < 16; i++){
+                            printf("%02X ", bBufferReader[i]);
+                        }  
                     }
+                    
                          
 
 				break;
