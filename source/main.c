@@ -385,13 +385,6 @@ uint32_t DetectMifare(void *halReader)
 			printf("MIFARE card detected\n");
 			return true;
 		}
-		printf("UID: ");
-		uint8_t i;
-		for(i = 0; i < bLength; i++)
-		{
-			printf("%02X ", bUid[i]);
-		}
-		printf("\n\n");
 		status = phpalI14443p3a_HaltA(&I14443p3a);
 		detected_card = 0xFFFF;
 	}
