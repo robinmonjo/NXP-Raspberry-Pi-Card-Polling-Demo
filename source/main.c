@@ -284,85 +284,59 @@ uint32_t DetectMifare(void *halReader) {
 		  break;
 		}
 
-		if (detected_card == 0xFFFF) {
-            //dealing with a mifare card
-			sak_atqa = bSak[0] << 24 | pAtqa[0] << 8 | pAtqa[1];
+        if (detected_card != 0xFFFF) {
+            return false; //no Mifare card detected
+        }
 
-			switch (sak_atqa) {
-			case sak_ul << 24 | atqa_ul:
-				printf("MIFARE Ultralight detected\n");
-				detected_card &= mifare_ultralight;
-                uint8_t bBufferReader[4];                    
-                //data on the card are located at address (pages) 04 to 0F (15)
-                int p;
-                for(p = 4; p <= 15; p++) {
-                    memset(bBufferReader, '\0', 4);
-                    PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, p, bBufferReader));
-                    int j;
-                    for(j = 0; j < 4; j++){
-                        printf("%02X ", bBufferReader[j]);
-                    }
+        //dealing with a mifare card
+		sak_atqa = bSak[0] << 24 | pAtqa[0] << 8 | pAtqa[1];
+		switch (sak_atqa) {
+		case sak_ul << 24 | atqa_ul:
+            //Mifare ultralight
+            uint8_t bBufferReader[4];                    
+            //data on the card are located at address (pages) 04 to 0F (15)
+            int p;
+            for(p = 4; p <= 15; p++) {
+                memset(bBufferReader, '\0', 4);
+                PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, p, bBufferReader));
+                int j;
+                for(j = 0; j < 4; j++){
+                    printf("%02X ", bBufferReader[j]);
                 }
-                
-                     
-			break;
-			case sak_mfp_2k_sl2 << 24 | atqa_mfp_s:
-				printf("MIFARE Plus detected\n");
-				detected_card &= mifare_plus;
-			break;
-			case sak_mfp_2k_sl3 << 24 | atqa_mfp_s_2K:
-				printf("MIFARE Plus detected\n");
-				detected_card &= mifare_plus;
-			break;
-			case sak_mfp_2k_sl3 << 24 | atqa_mfp_s:
-				printf("MIFARE Plus detected\n");
-				detected_card &= mifare_plus;
-			break;
-			case sak_mfp_4k_sl2 << 24 | atqa_mfp_s:
-				printf("MIFARE Plus detected\n");
-				detected_card &= mifare_plus;
-			break;
-			case sak_mfp_2k_sl2 << 24 | atqa_mfp_x:
-				printf("MIFARE Plus detected\n");
-				detected_card &= mifare_plus;
-			break;
-			case sak_mfp_2k_sl3 << 24 | atqa_mfp_x:
-				printf("MIFARE Plus detected\n");
-				detected_card &= mifare_plus;
-			break;
-			case sak_mfp_4k_sl2 << 24 | atqa_mfp_x:
-				printf("MIFARE Plus detected\n");
-				detected_card &= mifare_plus;
-			break;
-			case sak_desfire << 24 | atqa_desfire:
-				printf("MIFARE DESFire detected\n");
-				detected_card &= mifare_desfire;
-			break;
-			case sak_jcop << 24 | atqa_jcop:
-				printf("JCOP detected\n");
-				detected_card &= jcop;
-				//PaymentCard(halReader, bUid);
-			break;
-			case sak_layer4 << 24 | atqa_nPA:
-				printf("German eID (neuer Personalausweis) detected\n");
-				detected_card &= nPA;
-			break;
-			default:
-			break;
-			}
+            }         
+		break;
+		case sak_mfp_2k_sl2 << 24 | atqa_mfp_s:
+			//Mifare plus
+		break;
+		case sak_mfp_2k_sl3 << 24 | atqa_mfp_s_2K:
+			//Mifare plus
+		break;
+		case sak_mfp_2k_sl3 << 24 | atqa_mfp_s:
+            //Mifare plus
+		break;
+		case sak_mfp_4k_sl2 << 24 | atqa_mfp_s:
+            //Mifare plus
+		break;
+		case sak_mfp_2k_sl2 << 24 | atqa_mfp_x:
+            //Mifare plus
+		break;
+		case sak_mfp_2k_sl3 << 24 | atqa_mfp_x:
+            //Mifare plus
+		break;
+		case sak_mfp_4k_sl2 << 24 | atqa_mfp_x:
+            //Mifare plus
+		break;
+		case sak_desfire << 24 | atqa_desfire:
+			//Mifare DESFire
+		break;
+		default:
+		break;
 		}
 		
-
-		// There is a MIFARE card in the field, but we cannot determine it
-		if (!status && detected_card == 0xFFFF)
-		{
-			printf("MIFARE card detected\n");
-			return true;
-		}
+        //close the reader
 		status = phpalI14443p3a_HaltA(&I14443p3a);
-		detected_card = 0xFFFF;
 	}
-	return detected_card;
+	return true;
 }
 
 phStatus_t readerIC_Cmd_SoftReset(void *halReader) {
