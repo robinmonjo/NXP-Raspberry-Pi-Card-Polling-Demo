@@ -105,7 +105,6 @@
 // Forward declarations
 uint32_t DetectMifare(void *halReader);
 phStatus_t readerIC_Cmd_SoftReset(void *halReader);
-uint8_t * read_mifare_ultra_light_user_data(phalMful_Sw_DataParams_t *alMful);
 
 // Arrays
 
@@ -249,9 +248,9 @@ uint32_t DetectMifare(void *halReader) {
         }
 		
         printf("UID: ");
-        uint8_t uid_index;
-        for(uid_index = 0; uid_index < bLength; uid_index++) {
-            printf("%02X ", bUid[uid_index]);
+        uint8_t uidIndex;
+        for(uidIndex = 0; uidIndex < bLength; uidIndex++) {
+            printf("%02X ", bUid[uidIndex]);
         }
         printf("\n");
 
@@ -293,13 +292,18 @@ uint32_t DetectMifare(void *halReader) {
 			case sak_ul << 24 | atqa_ul:
 				printf("MIFARE Ultralight detected\n");
 				detected_card &= mifare_ultralight;
-
-                uint8_t * data = read_mifare_ultra_light_user_data(&alMful);
-
-                uint8_t idx;
-                for(idx = 0; idx < sizeof(data)/sizeof(uint8_t); idx++) {
-                    printf("%02X ", data[idx]);
+                uint8_t bBufferReader[4];                    
+                //data on the card are located at address (pages) 04 to 0F (15)
+                int p;
+                for(p = 4; p <= 15; p++) {
+                    memset(bBufferReader, '\0', 4);
+                    PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, p, bBufferReader));
+                    int j;
+                    for(j = 0; j < 4; j++){
+                        printf("%02X ", bBufferReader[j]);
+                    }
                 }
+                
                      
 			break;
 			case sak_mfp_2k_sl2 << 24 | atqa_mfp_s:
@@ -359,42 +363,6 @@ uint32_t DetectMifare(void *halReader) {
 		detected_card = 0xFFFF;
 	}
 	return detected_card;
-}
-
-uint8_t * read_mifare_ultra_light_user_data(phalMful_Sw_DataParams_t *alMful) {
-    uint8_t global_buffer[11 * 4]; //11 pages of 4 bytes
-    uint8_t *cursor = &global_buffer[0];
-    memset(global_buffer, '\0', 11 * 4);
-    phStatus_t status;
-
-    //data on the card are located at address (pages) 04 to 0F (15)
-    int page;
-    for(page = 4; page <= 15; page++) {
-        uint8_t buffer[4]; //will read 4 bytes per page
-        memset(buffer, '\0', 4);
-        PH_CHECK_SUCCESS_FCT(status, phalMful_Read(alMful, page, buffer)); //read the page
-
-        printf("\nOn page \n");
-        int idx = 0;
-        for(idx = 0; idx < 4; idx++) {
-            printf("%02X ", buffer[idx]);
-        }
-        fflush(stdout);
-        memcpy(cursor, buffer, sizeof(buffer)); //add it to glogab buffer
-        cursor += 4 * sizeof(uint8_t);
-        printf("\nAfter copy\n");
-        for(idx = 0; idx < 11 * 4; idx++) {
-            printf("%02X ", global_buffer[idx]);
-        }
-        fflush(stdout);
-    }
-    printf("\nfinally\n");
-    int c = 0;
-        for(c = 0; c < 11 * 4; c++) {
-            printf("%02X ", global_buffer[c]);
-        }
-        fflush(stdout);
-    return global_buffer;
 }
 
 phStatus_t readerIC_Cmd_SoftReset(void *halReader) {
