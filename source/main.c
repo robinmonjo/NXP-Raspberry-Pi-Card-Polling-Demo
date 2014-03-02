@@ -410,7 +410,8 @@ uint32_t DetectMifare(void *halReader)
                         int i;
                         for(i = 0; i < 4; i++){
                             printf("%02X ", bBufferReader[i]);
-                        }  
+                        }
+                        printf("\n");
                     }
                     
                          
