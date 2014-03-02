@@ -106,10 +106,7 @@
 uint32_t DetectMifare(void *halReader);
 phStatus_t readerIC_Cmd_SoftReset(void *halReader);
 
-// Arrays
-
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     phbalReg_R_Pi_spi_DataParams_t spi_balReader;
     void *balReader;
 
@@ -121,25 +118,21 @@ int main(int argc, char **argv)
 
     uint8_t bHalBufferReader[0x40];
 
-    /* Initialize the Reader BAL (Bus Abstraction Layer) component */
+    // Initialize the Reader BAL (Bus Abstraction Layer) component
     status = phbalReg_R_Pi_spi_Init(&spi_balReader, sizeof(phbalReg_R_Pi_spi_DataParams_t));
-    if (PH_ERR_SUCCESS != status)
-    {
+    if (PH_ERR_SUCCESS != status) {
         printf("Failed to initialize SPI\n");
         return 1;
     }
     balReader = (void *)&spi_balReader;
 
     status = phbalReg_OpenPort((void*)balReader);
-    if (PH_ERR_SUCCESS != status)
-    {
-        printf("Failed to open bal\n");
+    if (PH_ERR_SUCCESS != status) {
+        printf("Failed to open bal, try to run as sudo\n");
         return 2;
     }
 
-    /* we have a board with PN512,
-     * but on the software point of view,
-     * it's compatible to the RC523 */
+    // we have a board with PN512, but on the software point of view, it's compatible to the RC523
     status = phhalHw_Rc523_Init(&halReader,
                                 sizeof(phhalHw_Rc523_DataParams_t),
                                 balReader,
@@ -150,17 +143,14 @@ int main(int argc, char **argv)
                                 sizeof(bHalBufferReader));
     pHal = &halReader;
 
-    if (PH_ERR_SUCCESS != status)
-    {
+    if (PH_ERR_SUCCESS != status) {
         printf("Failed to initialize the HAL\n");
         return 3;
     }
 
-    /* Set the HAL configuration to SPI */
-    status = phhalHw_SetConfig(pHal, PHHAL_HW_CONFIG_BAL_CONNECTION,
-                               PHHAL_HW_BAL_CONNECTION_SPI);
-    if (PH_ERR_SUCCESS != status)
-    {
+    // Set the HAL configuration to SPI
+    status = phhalHw_SetConfig(pHal, PHHAL_HW_CONFIG_BAL_CONNECTION, PHHAL_HW_BAL_CONNECTION_SPI);
+    if (PH_ERR_SUCCESS != status) {
         printf("Failed to set hal connection SPI\n");
         return 4;
     }
@@ -168,24 +158,17 @@ int main(int argc, char **argv)
     /**************************************************************************
      * Begin the polling
      *************************************************************************/
-    printf("/****** Begin Polling ******/\n");
+    printf("Starting polling ...\n");
 
-    for(;;)
-    {
-
-        /*
-         * Detecting Mifare cards */
-        if (DetectMifare(pHal))
-        {
-            /* reset the IC  */
+    for(;;) {
+        if (DetectMifare(pHal)) {
+            //reset the IC
             readerIC_Cmd_SoftReset(pHal);
         }
-        else
-        {
-            printf("No card or Tag detected\n");
-        }
+        //else
+            // no card in the field
 
-        sleep(1);
+        sleep(1); //poll every second
     }
 
     phhalHw_FieldOff(pHal);
@@ -250,7 +233,7 @@ uint32_t DetectMifare(void *halReader) {
         printf("UID: ");
         uint8_t uidIndex;
         for(uidIndex = 0; uidIndex < bLength; uidIndex++) {
-            printf("%02X ", bUid[uidIndex]);
+            printf("%02X", bUid[uidIndex]);
         }
         printf("\n");
 
@@ -294,6 +277,7 @@ uint32_t DetectMifare(void *halReader) {
 		case sak_ul << 24 | atqa_ul: {
             //Mifare ultralight
             uint8_t bBufferReader[4];                    
+            printf("DATA: ");
             //data on the card are located at address (pages) 04 to 0F (15)
             int p;
             for(p = 4; p <= 15; p++) {
@@ -301,7 +285,7 @@ uint32_t DetectMifare(void *halReader) {
                 PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, p, bBufferReader));
                 int j;
                 for(j = 0; j < 4; j++){
-                    printf("%02X ", bBufferReader[j]);
+                    printf("%02X", bBufferReader[j]);
                 }
             }
         }
