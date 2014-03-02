@@ -372,7 +372,7 @@ uint8_t * read_mifare_ultra_light_user_data(phalMful_Sw_DataParams_t *alMful) {
     int page;
     for(page = 4; page <= 15; page++) {
         memset(buffer, '\0', 4);
-        PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, page, buffer)); //read the page
+        PH_CHECK_SUCCESS_FCT(status, phalMful_Read(alMful, page, buffer)); //read the page
         memcpy(cursor, buffer, sizeof(buffer)); //add it to glogab buffer
         cursor += sizeof(buffer);
     }
