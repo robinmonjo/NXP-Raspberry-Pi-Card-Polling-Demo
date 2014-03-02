@@ -297,7 +297,7 @@ uint32_t DetectMifare(void *halReader) {
                 uint8_t * data = read_mifare_ultra_light_user_data(&alMful);
 
                 uint8_t idx;
-                for(idx = 0; idx < sizeof(data); idx++) {
+                for(idx = 0; idx < sizeof(data)/sizeof(uint8_t); idx++) {
                     printf("%02X ", data[idx]);
                 }
                      
@@ -373,8 +373,8 @@ uint8_t * read_mifare_ultra_light_user_data(phalMful_Sw_DataParams_t *alMful) {
     for(page = 4; page <= 15; page++) {
         memset(buffer, '\0', 4);
         PH_CHECK_SUCCESS_FCT(status, phalMful_Read(alMful, page, buffer)); //read the page
-        memcpy(cursor, buffer, sizeof(buffer)); //add it to glogab buffer
-        cursor += sizeof(buffer);
+        memcpy(cursor, buffer, sizeof(buffer)/sizeof(uint8_t)); //add it to glogab buffer
+        cursor += sizeof(buffer)/sizeof(uint8_t);
     }
     return global_buffer;
 }
