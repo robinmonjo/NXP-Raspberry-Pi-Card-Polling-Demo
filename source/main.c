@@ -291,7 +291,7 @@ uint32_t DetectMifare(void *halReader) {
         //dealing with a mifare card
 		sak_atqa = bSak[0] << 24 | pAtqa[0] << 8 | pAtqa[1];
 		switch (sak_atqa) {
-		case sak_ul << 24 | atqa_ul:
+		case sak_ul << 24 | atqa_ul: {
             //Mifare ultralight
             uint8_t bBufferReader[4];                    
             //data on the card are located at address (pages) 04 to 0F (15)
@@ -303,7 +303,8 @@ uint32_t DetectMifare(void *halReader) {
                 for(j = 0; j < 4; j++){
                     printf("%02X ", bBufferReader[j]);
                 }
-            }         
+            }
+        }
 		break;
 		case sak_mfp_2k_sl2 << 24 | atqa_mfp_s:
 			//Mifare plus
