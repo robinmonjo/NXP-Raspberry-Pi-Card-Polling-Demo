@@ -250,7 +250,7 @@ uint32_t DetectMifare(void *halReader) {
 		
         printf("UID: ");
         uint8_t uid_index;
-        for(uid_index = 0; uidIndex < bLength; uid_index++) {
+        for(uid_index = 0; uid_index < bLength; uid_index++) {
             printf("%02X ", bUid[uid_index]);
         }
         printf("\n");
@@ -365,13 +365,14 @@ uint8_t * read_mifare_ultra_light_user_data(phalMful_Sw_DataParams_t *alMful) {
     uint8_t global_buffer[11 * 4]; //11 pages of 4 bytes
     uint8_t *cursor = global_buffer;
     memset(global_buffer, '\0', 11 * 4);
+    phStatus_t status;
 
     //data on the card are located at address (pages) 04 to 0F (15)
     uint8_t buffer[4]; //will read 4 bytes per page
-    int i;
-    for(i = 4; p <= 15; p++) {
+    int page;
+    for(page = 4; page <= 15; page++) {
         memset(buffer, '\0', 4);
-        PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, p, buffer)); //read the page
+        PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, page, buffer)); //read the page
         memcpy(cursor, buffer, sizeof(buffer)); //add it to glogab buffer
         cursor += sizeof(buffer);
     }
