@@ -363,7 +363,7 @@ uint32_t DetectMifare(void *halReader) {
 
 uint8_t * read_mifare_ultra_light_user_data(phalMful_Sw_DataParams_t *alMful) {
     uint8_t global_buffer[11 * 4]; //11 pages of 4 bytes
-    uint8_t *cursor = global_buffer;
+    uint8_t *cursor = &global_buffer[0];
     memset(global_buffer, '\0', 11 * 4);
     phStatus_t status;
 
