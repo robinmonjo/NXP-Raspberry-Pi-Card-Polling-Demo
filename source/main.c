@@ -318,6 +318,8 @@ uint32_t DetectMifare(void *halReader) {
 		break;
 		}
 		
+        printf("\n\n");
+
         //close the reader
 		status = phpalI14443p3a_HaltA(&I14443p3a);
 	}
