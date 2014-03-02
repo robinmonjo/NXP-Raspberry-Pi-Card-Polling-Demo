@@ -410,7 +410,6 @@ uint32_t DetectMifare(void *halReader)
                     printf("second read:\n");
                     memset(bBufferReader, '\0', 0x60);
                     PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, 100, bBufferReader));
-                    int i;
                     for(i = 0; i < 96; i++){
                         printf("%02X", bBufferReader[i]);
                     }
