@@ -105,6 +105,7 @@
 // Forward declarations
 uint32_t DetectMifare(void *halReader);
 phStatus_t readerIC_Cmd_SoftReset(void *halReader);
+uint8_t * read_mifare_ultra_light_user_data(phalMful_Sw_DataParams_t *alMful);
 
 // Arrays
 
@@ -192,14 +193,10 @@ int main(int argc, char **argv)
     return 0;
 }
 
-uint32_t DetectMifare(void *halReader)
-{
+uint32_t DetectMifare(void *halReader) {
     phpalI14443p4_Sw_DataParams_t I14443p4;
     phpalMifare_Sw_DataParams_t palMifare;
     phpalI14443p3a_Sw_DataParams_t I14443p3a;
-
-    uint8_t cryptoEnc[8];
-    uint8_t cryptoRng[8];
 
     phalMful_Sw_DataParams_t alMful;
 
@@ -212,172 +209,145 @@ uint32_t DetectMifare(void *halReader)
     phStatus_t status;
     uint16_t detected_card = 0xFFFF;
 
+    //Initialize the 14443-3A PAL (Protocol Abstraction Layer) component
+    PH_CHECK_SUCCESS_FCT(status, phpalI14443p3a_Sw_Init(&I14443p3a, sizeof(phpalI14443p3a_Sw_DataParams_t), halReader));
 
-    /* Initialize the 14443-3A PAL (Protocol Abstraction Layer) component */
-    PH_CHECK_SUCCESS_FCT(status, phpalI14443p3a_Sw_Init(&I14443p3a,
-            sizeof(phpalI14443p3a_Sw_DataParams_t), halReader));
+    // Initialize the 14443-4 PAL component
+    PH_CHECK_SUCCESS_FCT(status, phpalI14443p4_Sw_Init(&I14443p4, sizeof(phpalI14443p4_Sw_DataParams_t), halReader));
 
-    /* Initialize the 14443-4 PAL component */
-    PH_CHECK_SUCCESS_FCT(status, phpalI14443p4_Sw_Init(&I14443p4,
-            sizeof(phpalI14443p4_Sw_DataParams_t), halReader));
+    // Initialize the Mifare PAL component
+    PH_CHECK_SUCCESS_FCT(status, phpalMifare_Sw_Init(&palMifare, sizeof(phpalMifare_Sw_DataParams_t), halReader, &I14443p4));
 
-    /* Initialize the Mifare PAL component */
-    PH_CHECK_SUCCESS_FCT(status, phpalMifare_Sw_Init(&palMifare,
-            sizeof(phpalMifare_Sw_DataParams_t), halReader, &I14443p4));
+    // Initialize Ultralight(-C) AL component
+    PH_CHECK_SUCCESS_FCT(status, phalMful_Sw_Init(&alMful, sizeof(phalMful_Sw_DataParams_t), &palMifare, NULL, NULL, NULL));
 
-    /* Initialize Ultralight(-C) AL component */
-    PH_CHECK_SUCCESS_FCT(status, phalMful_Sw_Init(&alMful,
-            sizeof(phalMful_Sw_DataParams_t), &palMifare, NULL, NULL, NULL));
-
-    /* Reset the RF field */
+    // Reset the RF field
     PH_CHECK_SUCCESS_FCT(status, phhalHw_FieldReset(halReader));
 
-    /* Apply the type A protocol settings
-     * and activate the RF field. */
-    PH_CHECK_SUCCESS_FCT(status,
-            phhalHw_ApplyProtocolSettings(halReader, PHHAL_HW_CARDTYPE_ISO14443A));
+    // Apply the type A protocol settings and activate the RF field.
+    PH_CHECK_SUCCESS_FCT(status, phhalHw_ApplyProtocolSettings(halReader, PHHAL_HW_CARDTYPE_ISO14443A));
 
-    /* Empty the pAtqa */
+    // Empty the pAtqa
     memset(pAtqa, '\0', 2);
     status = phpalI14443p3a_RequestA(&I14443p3a, pAtqa);
 
-    /* Reset the RF field */
+    // Reset the RF field
     PH_CHECK_SUCCESS_FCT(status, phhalHw_FieldReset(halReader));
 
-    /* Empty the bSak */
+    // Empty the bSak
     memset(bSak, '\0', 1);
 
-    /* Activate one card after another
-	 * and check it's type. */
+    // Activate one card after another
 	bMoreCardsAvailable = 1;
 	while (bMoreCardsAvailable) {
 
-		/* Activate the communication layer part 3
-		 * of the ISO 14443A standard. */
+		// Activate the communication layer part 3 of the ISO 14443A standard.
 		status = phpalI14443p3a_ActivateCard(&I14443p3a, NULL, 0x00, bUid, &bLength, bSak, &bMoreCardsAvailable);
 
-		sak_atqa = bSak[0] << 24 | pAtqa[0] << 8 | pAtqa[1];
-		sak_atqa &= 0xFFFF0FFF;
-
-        printf("UID: ");
-        uint8_t i;
-        for(i = 0; i < bLength; i++) {
-            printf("%02X ", bUid[i]);
+        if (status) {
+            return false; //no card detected
         }
-        printf("\n\n");
+		
+        printf("UID: ");
+        uint8_t uid_index;
+        for(uid_index = 0; uidIndex < bLength; uid_index++) {
+            printf("%02X ", bUid[uid_index]);
+        }
+        printf("\n");
 
-		if (!status)
-		{
-			// Detect mini or classic
-			switch (sak_atqa)
-			{
-			case sak_mfc_1k << 24 | atqa_mfc:
-				printf("MIFARE Classic detected\n");
-				detected_card &= mifare_classic;
+        sak_atqa = bSak[0] << 24 | pAtqa[0] << 8 | pAtqa[1];
+        sak_atqa &= 0xFFFF0FFF;
+
+		// Detect mini or classic
+		switch (sak_atqa) {
+		  case sak_mfc_1k << 24 | atqa_mfc:
+			detected_card &= mifare_classic;
+		  break;
+		  case sak_mfc_4k << 24 | atqa_mfc:
+			detected_card &= mifare_classic;
+		  break;
+		  case sak_mfp_2k_sl1 << 24 | atqa_mfp_s:
+			detected_card &= mifare_classic;
+		  break;
+		  case sak_mini << 24 | atqa_mini:
+			detected_card &= mifare_mini;
+		  break;
+		  case sak_mfp_4k_sl1 << 24 | atqa_mfp_s:
+			detected_card &= mifare_classic;
+		  break;
+		  case sak_mfp_2k_sl1 << 24 | atqa_mfp_x:
+			detected_card &= mifare_classic;
+		  break;
+		  case sak_mfp_4k_sl1 << 24 | atqa_mfp_x:
+			detected_card &= mifare_classic;
+		  break;
+		  default:
+		  break;
+		}
+
+		if (detected_card == 0xFFFF) {
+            //dealing with a mifare card
+			sak_atqa = bSak[0] << 24 | pAtqa[0] << 8 | pAtqa[1];
+
+			switch (sak_atqa) {
+			case sak_ul << 24 | atqa_ul:
+				printf("MIFARE Ultralight detected\n");
+				detected_card &= mifare_ultralight;
+
+                uint8_t * data = read_mifare_ultra_light_user_data(&alMful);
+
+                uint8_t idx;
+                for(idx = 0; idx < sizeof(data); idx++) {
+                    printf("%02X ", data[idx]);
+                }
+                     
 			break;
-			case sak_mfc_4k << 24 | atqa_mfc:
-				printf("MIFARE Classic detected\n");
-				detected_card &= mifare_classic;
+			case sak_mfp_2k_sl2 << 24 | atqa_mfp_s:
+				printf("MIFARE Plus detected\n");
+				detected_card &= mifare_plus;
 			break;
-			case sak_mfp_2k_sl1 << 24 | atqa_mfp_s:
-				printf("MIFARE Classic detected\n");
-				detected_card &= mifare_classic;
+			case sak_mfp_2k_sl3 << 24 | atqa_mfp_s_2K:
+				printf("MIFARE Plus detected\n");
+				detected_card &= mifare_plus;
 			break;
-			case sak_mini << 24 | atqa_mini:
-				printf("MIFARE Mini detected\n");
-				detected_card &= mifare_mini;
+			case sak_mfp_2k_sl3 << 24 | atqa_mfp_s:
+				printf("MIFARE Plus detected\n");
+				detected_card &= mifare_plus;
 			break;
-			case sak_mfp_4k_sl1 << 24 | atqa_mfp_s:
-				printf("MIFARE Classic detected\n");
-				detected_card &= mifare_classic;
+			case sak_mfp_4k_sl2 << 24 | atqa_mfp_s:
+				printf("MIFARE Plus detected\n");
+				detected_card &= mifare_plus;
 			break;
-			case sak_mfp_2k_sl1 << 24 | atqa_mfp_x:
-				printf("MIFARE Classic detected\n");
-				detected_card &= mifare_classic;
+			case sak_mfp_2k_sl2 << 24 | atqa_mfp_x:
+				printf("MIFARE Plus detected\n");
+				detected_card &= mifare_plus;
 			break;
-			case sak_mfp_4k_sl1 << 24 | atqa_mfp_x:
-				printf("MIFARE Classic detected\n");
-				detected_card &= mifare_classic;
+			case sak_mfp_2k_sl3 << 24 | atqa_mfp_x:
+				printf("MIFARE Plus detected\n");
+				detected_card &= mifare_plus;
+			break;
+			case sak_mfp_4k_sl2 << 24 | atqa_mfp_x:
+				printf("MIFARE Plus detected\n");
+				detected_card &= mifare_plus;
+			break;
+			case sak_desfire << 24 | atqa_desfire:
+				printf("MIFARE DESFire detected\n");
+				detected_card &= mifare_desfire;
+			break;
+			case sak_jcop << 24 | atqa_jcop:
+				printf("JCOP detected\n");
+				detected_card &= jcop;
+				//PaymentCard(halReader, bUid);
+			break;
+			case sak_layer4 << 24 | atqa_nPA:
+				printf("German eID (neuer Personalausweis) detected\n");
+				detected_card &= nPA;
 			break;
 			default:
 			break;
 			}
-
-			if (detected_card == 0xFFFF)
-			{
-				sak_atqa = bSak[0] << 24 | pAtqa[0] << 8 | pAtqa[1];
-				switch (sak_atqa)
-				{
-				case sak_ul << 24 | atqa_ul:
-					printf("MIFARE Ultralight detected\n");
-					detected_card &= mifare_ultralight;
-
-
-                    uint8_t bBufferReader[4];                    
-                    //data on the card are located at address (pages) 04 to 0F (15)
-                    int p;
-                    for(p = 4; p <= 15; p++) {
-                        memset(bBufferReader, '\0', 4);
-                        PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, p, bBufferReader));
-                        int j;
-                        for(j = 0; j < 4; j++){
-                            printf("%02X ", bBufferReader[j]);
-                        }
-                        printf("\n");
-                    }
-                    
-                         
-
-				break;
-				case sak_mfp_2k_sl2 << 24 | atqa_mfp_s:
-					printf("MIFARE Plus detected\n");
-					detected_card &= mifare_plus;
-				break;
-				case sak_mfp_2k_sl3 << 24 | atqa_mfp_s_2K:
-					printf("MIFARE Plus detected\n");
-					detected_card &= mifare_plus;
-				break;
-				case sak_mfp_2k_sl3 << 24 | atqa_mfp_s:
-					printf("MIFARE Plus detected\n");
-					detected_card &= mifare_plus;
-				break;
-				case sak_mfp_4k_sl2 << 24 | atqa_mfp_s:
-					printf("MIFARE Plus detected\n");
-					detected_card &= mifare_plus;
-				break;
-				case sak_mfp_2k_sl2 << 24 | atqa_mfp_x:
-					printf("MIFARE Plus detected\n");
-					detected_card &= mifare_plus;
-				break;
-				case sak_mfp_2k_sl3 << 24 | atqa_mfp_x:
-					printf("MIFARE Plus detected\n");
-					detected_card &= mifare_plus;
-				break;
-				case sak_mfp_4k_sl2 << 24 | atqa_mfp_x:
-					printf("MIFARE Plus detected\n");
-					detected_card &= mifare_plus;
-				break;
-				case sak_desfire << 24 | atqa_desfire:
-					printf("MIFARE DESFire detected\n");
-					detected_card &= mifare_desfire;
-				break;
-				case sak_jcop << 24 | atqa_jcop:
-					printf("JCOP detected\n");
-					detected_card &= jcop;
-					//PaymentCard(halReader, bUid);
-				break;
-				case sak_layer4 << 24 | atqa_nPA:
-					printf("German eID (neuer Personalausweis) detected\n");
-					detected_card &= nPA;
-				break;
-				default:
-				break;
-				}
-			}
 		}
-		else
-			// No MIFARE card is in the field
-			return false;
+		
 
 		// There is a MIFARE card in the field, but we cannot determine it
 		if (!status && detected_card == 0xFFFF)
@@ -391,17 +361,30 @@ uint32_t DetectMifare(void *halReader)
 	return detected_card;
 }
 
-phStatus_t readerIC_Cmd_SoftReset(void *halReader)
-{
-    phStatus_t status = PH_ERR_INVALID_DATA_PARAMS;
+uint8_t * read_mifare_ultra_light_user_data(phalMful_Sw_DataParams_t *alMful) {
+    uint8_t global_buffer[11 * 4]; //11 pages of 4 bytes
+    uint8_t *cursor = global_buffer;
+    memset(global_buffer, '\0', 11 * 4);
 
-    switch (PH_GET_COMPID(halReader))
-    {
-    case PHHAL_HW_RC523_ID:
-        status = phhalHw_Rc523_Cmd_SoftReset(halReader);
-    break;
+    //data on the card are located at address (pages) 04 to 0F (15)
+    uint8_t buffer[4]; //will read 4 bytes per page
+    int i;
+    for(i = 4; p <= 15; p++) {
+        memset(buffer, '\0', 4);
+        PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, p, buffer)); //read the page
+        memcpy(cursor, buffer, sizeof(buffer)); //add it to glogab buffer
+        cursor += sizeof(buffer);
     }
+    return global_buffer;
+}
 
+phStatus_t readerIC_Cmd_SoftReset(void *halReader) {
+    phStatus_t status = PH_ERR_INVALID_DATA_PARAMS;
+    switch (PH_GET_COMPID(halReader)) {
+        case PHHAL_HW_RC523_ID:
+            status = phhalHw_Rc523_Cmd_SoftReset(halReader);
+        break;
+    }
     return status;
 }
 
