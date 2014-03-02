@@ -401,7 +401,7 @@ uint32_t DetectMifare(void *halReader)
 					detected_card &= mifare_ultralight;
                     uint8_t bBufferReader[96];
                     memset(bBufferReader, '\0', 0x60);
-                    PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, 1, bBufferReader));
+                    PH_CHECK_SUCCESS_FCT(status, phalMful_Read(&alMful, 2, bBufferReader));
                     int i;
                     printf("First read:\n");
                     for(i = 0; i < 96; i++){
